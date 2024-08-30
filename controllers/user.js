@@ -48,11 +48,11 @@ const register = (req, res) => {
         });
     }
 
-    // cifrar la contraseña
+    //* cifrar la contraseña
 
-    // guardar usuario en la base de datos
+    //* guardar usuario en la base de datos
 
-    // devolver resultado
+    //* devolver resultado
 
     return res.status(200).json({
         message: "registro de usuarios",
