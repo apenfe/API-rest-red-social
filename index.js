@@ -17,17 +17,17 @@ app.use(cors());
 app.use(express.json());    //* Todo lo que se recibe como body se transforma a json
 app.use(express.urlencoded({ extended: true }));    //* Todo lo que se recibe como form normal lo codifica a json
 
-//cargar conf de rutas
+//cargar configuracion de rutas
+//* Importacion de las diferentes rutas existentes
+const UserRoutes = require("./routes/user");
+const PublicationRoutes = require("./routes/publication");
+const FollowRoutes = require("./routes/follow");
 
-//TODO Borrar tras hacer la prueba -----------------------------------
-// Ruta de prueba
-app.get("/ruta-prueba", (req, res) => {
-    return res.status(200).json({
-        id: 1,
-        "nombre": "adrian",
-    })
-});
-//TODO Borrar tras hacer la prueba -----------------------------------
+//* Carga de las rutas en la app
+const prefix = "/api";
+app.use(prefix + "/user", UserRoutes);
+app.use(prefix + "/publication", PublicationRoutes);
+app.use(prefix + "/follow", FollowRoutes);
 
 // poner servidor en escucha
 app.listen(puerto, () => {
