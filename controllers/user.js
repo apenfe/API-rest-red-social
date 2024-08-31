@@ -1,8 +1,9 @@
 //* Importacion de dependencias y modulos
 const User = require("../models/user"); //? Importacion del modelo usuario
+const bcrypt = require("bcrypt");
 
 //* Registro de usuarios
-const register = (req, res) => {
+const register = async (req, res) => {
 
     //* recoger datos de la peticion
     let params = req.body;
@@ -21,14 +22,11 @@ const register = (req, res) => {
 
     //todo validacion 
 
-    //* crear objeto de usuario
-    let user_to_save = new User(params);
-
     //* control de usuarios duplicados
-    let consulta = User.find({
+    let consulta = await User.find({
         $or: [
-            { email: user_to_save.email.toLowerCase() },
-            { nick: user_to_save.nick.toLowerCase() },
+            { email: params.email.toLowerCase() },
+            { nick: params.nick.toLowerCase() },
         ]
     })
 
@@ -49,18 +47,88 @@ const register = (req, res) => {
     }
 
     //* cifrar la contraseña
+    let pwd = await bcrypt.hash(params.password, 10);
+    params.password = pwd;
+
+    //* crear objeto de usuario
+    let user_to_save = new User(params);
 
     //* guardar usuario en la base de datos
+    user_to_save.save()
+        .then(userStored => {
 
-    //* devolver resultado
+            if (userStored) {
 
-    return res.status(200).json({
-        message: "registro de usuarios",
-        user_to_save
-    });
+                //* devolver resultado
+                return res.status(200).json({
+                    message: "registro de usuarios",
+                    user_to_save
+                });
+
+            }
+
+        })
+        .catch(error => {
+            return res.status(500).send({ status: "error", "message": "error al guardar" });
+        })
+
+}
+
+//* Logueo de usuarios al sistema
+const login = async (req, res) => {
+
+    // recoger parametros del body
+    const params = req.body;
+
+    if (!params.email || !params.password) {
+        return res.status(400).send({
+            status: "error",
+            message: "faltan datos por enviar"
+        })
+    }
+
+    // buscar en la bbdd si existe usuario
+    let user = await User.findOne({ email: params.email })//.select({ password: 0 })
+
+    if (!user) {
+        return res.status(400).send({
+            status: "error",
+            message: "no existe el usuario"
+        })
+    } else {
+
+        // comprobar su contrasña
+        let pwd = bcrypt.compareSync(params.password, user.password);
+
+        if (!pwd) {
+            return res.status(400).send({
+                status: "error",
+                message: "contraseña y/o usuario incorrectos"
+            })
+        }
+
+        // conseguir el token
+        const token = false;
+
+        // datos del usuario
+
+        return res.status(200).send({
+            status: "success",
+            message: "accion de login finalizada",
+            user: {
+                name: user.name,
+                nick: user.nick,
+                id: user._id
+            },
+            token
+        })
+
+    }
+
 }
 
 //* Exportar acciones
 module.exports = {
-    register
+    register,
+    login
 }
