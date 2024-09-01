@@ -1,6 +1,18 @@
 //* Importacion de dependencias y modulos
 const User = require("../models/user"); //? Importacion del modelo usuario
 const bcrypt = require("bcrypt");
+const jwt = require("../services/jwt");
+
+//* funcion de testeo
+const testeo = async (req, res) => {
+
+    return res.status(200).json({
+        status: "mensaje prueba",
+        message: "probando",
+        usuario: req.user
+    });
+
+}
 
 //* Registro de usuarios
 const register = async (req, res) => {
@@ -108,7 +120,7 @@ const login = async (req, res) => {
         }
 
         // conseguir el token
-        const token = false;
+        const token = jwt.createToken(user);
 
         // datos del usuario
 
@@ -130,5 +142,6 @@ const login = async (req, res) => {
 //* Exportar acciones
 module.exports = {
     register,
-    login
+    login,
+    testeo
 }
