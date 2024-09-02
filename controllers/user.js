@@ -2,6 +2,7 @@
 const User = require("../models/user"); //? Importacion del modelo usuario
 const bcrypt = require("bcrypt");
 const jwt = require("../services/jwt");
+const mongoosePagination = require("mongoose-pagination");
 
 //* funcion de testeo
 const testeo = async (req, res) => {
@@ -139,9 +140,84 @@ const login = async (req, res) => {
 
 }
 
+//* Nostarr info perfil de usuario concreto
+const profile = async (req, res) => {
+
+    // recibir el parametro de id del usuario por la url
+    const id = req.params.id;
+
+    // consulta pra sacar datos del usuario
+    let userProfile = await User.findById(id).select({ password: 0, role: 0 }).exec();
+
+    if (!userProfile) {
+        return res.status(404).send({
+            status: "error",
+            message: "no existe el usuario o hay un error"
+        });
+    }
+
+    // devolver el resultado
+    // posteriorente enviar informacoion de follows para mostarr en perfil
+    return res.status(200).send({
+        status: "success",
+        user: userProfile
+    });
+
+}
+
+//* Mostarr listado completo de usuarios en la red social
+const list = (req, res) => {
+
+    // controlar en que pagina estamos
+    let page = 1;
+
+    if (req.params.page) {
+        page = parseInt(req.params.page);
+    }
+
+    // consulta con mongoose paginate
+    let itemsPerPage = 5;
+
+    User.find().sort('_id').paginate(page, itemsPerPage).then(async (users) => {
+        // Get total users
+        const totalUsers = await User.countDocuments({}).exec();
+        const totalPages = Math.ceil(totalUsers / itemsPerPage);
+
+        if (!users) {
+            return res.status(404).send({
+                status: "Error",
+                message: "No users avaliable...",
+                error: error
+            });
+        }
+
+        // Return response
+        return res.status(200).send
+            ({
+                status: 'Success',
+                users,
+                page,
+                itemsPerPage,
+                total: totalUsers,
+                pages: totalPages
+            });
+
+    }).catch((error) => {
+        return res.status(500).send({
+            status: "Error",
+            error: error,
+            message: "Query error..."
+
+        });
+    });
+
+}
+
 //* Exportar acciones
 module.exports = {
     register,
     login,
-    testeo
+    testeo,
+    profile,
+    list
 }
