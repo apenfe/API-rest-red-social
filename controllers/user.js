@@ -213,11 +213,70 @@ const list = (req, res) => {
 
 }
 
+//* actualizar datos de usuario
+const update = async (req, res) => {
+
+    // Recoger info del usuario a actualizar
+    const userIdentity = req.user;
+
+    // UserTouPDATE son los que nos envia el cliente y los de arriba los que tenemos
+    const userToUpdate = req.body;
+
+    //Eliminar campos sobrantes que no se deban actualizar
+    delete userToUpdate.iat;
+    delete userToUpdate.exp;
+    delete userToUpdate.role;
+    delete userToUpdate.image;
+    console.log(userToUpdate);
+
+    // Comprobar si el usuario ya existe
+    const duplicated_user = await User.find({
+        $or: [
+            { email: userToUpdate.email },
+            { nick: userToUpdate.nick }
+        ]
+    }).exec()
+    let userIsset = false;
+    duplicated_user.forEach(user => {
+        if (user && user._id != userIdentity.id) userIsset = true;
+    });
+
+    if (userIsset) {
+        return res.status(200).send({
+            status: "success",
+            message: "There is already a registered user with that name or email"
+        })
+    }
+
+    // Si llega la contrasena 
+    if (userToUpdate.password) {
+        let pwd = await bcrypt.hash(userToUpdate.password, 10)
+        userToUpdate.password = pwd;
+        // Si me llega la passw cifrarlo    
+    }
+
+    // Buscar y actualizar 
+    let userUpdated = await User.findByIdAndUpdate(userIdentity.id, userToUpdate, { new: true })
+    if (!userUpdated) {
+        return res.tatus(400).send({
+            status: 'error',
+            message: 'Update user method has failed',
+        })
+    }
+
+    return res.status(200).send({
+        status: 'success',
+        message: 'Update user method',
+        user: userUpdated
+    })
+}
+
 //* Exportar acciones
 module.exports = {
     register,
     login,
     testeo,
     profile,
-    list
+    list,
+    update
 }

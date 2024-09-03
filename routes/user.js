@@ -12,6 +12,7 @@ router.post("/register", UserController.register);
 router.post("/login", UserController.login);
 router.get("/profile/:id", check.auth, UserController.profile);
 router.get("/list/:page?", check.auth, UserController.list);
+router.put("/update", check.auth, UserController.update);
 
 //* Exportacion del router para su uso posterior
 module.exports = router;
